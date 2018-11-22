@@ -1,11 +1,12 @@
 <template>
   <div>
-  <input type="file" accept="image/*;capture=camera" @change="getImage">
+  <button @click="readQrStream">Start</button>
+  <video ref="streamPlayer" height="400" width="400"></video>
 
-    <input type="file" accept="video/*;capture=camcorder">
+  <!-- <input type="file" accept="image/*;capture=camera" @change="getImage">
 
-    <!-- <device type="media" @change="update(this.data)"></device>
-<video autoplay ref="streamPlayer"></video> -->
+    <input type="file" accept="video/*;capture=camcorder"> -->
+
     <canvas ref="qrCanvas" id="myCanvas" width="200" height="100"></canvas>
   </div>
 </template>
@@ -24,6 +25,17 @@ export default {
       this.$refs.streamPlayer.src = stream;
     },
     getImage(event) {
+  },
+  readQrStream() {
+    navigator.mediaDevices.getUserMedia({ audio: false, video: true })
+    .then(stream => {
+      let video = this.$refs.streamPlayer;
+      video.srcObject  = stream;
+      console.log(stream.getVideoTracks())
+      video.onloadedmetadata = function(e) {
+    video.play();
+  };
+    }).catch(console.log);
   }
   },
   mounted: function() {
