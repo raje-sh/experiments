@@ -35,10 +35,15 @@ export default {
       stream: undefined,
       canStream: true,
       scanIntervalId: undefined,
-      decodedData: "",
+      decodedData: undefined,
       getFrameInterval: 500,
-      scanTimeout: 6000
-      // scanTimeout: 60000
+      scanTimeout: 6000,
+      scanConfig: {
+        camera: {
+          height: 350,
+          width: 640
+        }
+      }
     };
   },
   watch: {
@@ -54,7 +59,10 @@ export default {
     },
     readQrStream() {
       navigator.mediaDevices
-        .getUserMedia({ audio: false, video: true })
+        .getUserMedia({
+          audio: false,
+          video: { facingMode: { exact: "environment" } }
+        })
         .then(stream => {
           this.stream = stream;
           let video = this.$refs.streamPlayer;
@@ -70,67 +78,62 @@ export default {
           setTimeout(() => {
             clearInterval(this.scanIntervalId);
             this.stopScanning();
-            this.$notify({
-              title: "Scan Timeout Exceeded",
-              message: "Please Try Again"
-            });
+            if (this.decodedData == undefined) {
+              this.$notify({
+                title: "Scan Timeout Exceeded",
+                message: "Please Try Again"
+              });
+            }
           }, this.scanTimeout);
         })
         .catch(console.log);
     },
     getFrame() {
       this.imageFrame
-        // .grabFrame()
         .takePhoto({ imageHeight: 480, imageWidth: 640 })
-        .then(imageBitmapOrBlob => {
-          const { data, height, width } = this.transferToImageData(
-            imageBitmapOrBlob
-          );
-          let decoded = jsQR(data, height, width);
-          console.log(
-            `${data.length}, ${height}, ${width}, ${height *
-              width} =========> ${decoded}`
-          );
-          if (decoded) {
-            const { data, chunks, location, binaryData } = decoded;
-            this.canStream = false;
-            this.decodedData = decoded.data;
-          }
+        .then(photoBlob => {
+          // Promise.race()
+          this.scanBlob(photoBlob)
+            .then(({ data, chunks, location, binaryData }) => {
+              if (this.decodedData == undefined) {
+                this.canStream = false;
+                this.decodedData = data;
+                console.log(`${data}`);
+              }
+            })
+            .catch(err => {
+              console.error(err);
+            });
         })
         .catch(error => console.log(error));
     },
-    async transferToImageData(imageBitmapOrBlob) {
-      if (imageBitmapOrBlob instanceof ImageBitmap) {
-        let { width, height } = imageBitmapOrBlob;
-        let canvas = document.createElement("canvas");
-        canvas.height = height;
-        canvas.width = width;
-        let ctx = canvas.getContext("2d");
-        ctx.drawImage(imageBitmapOrBlob, 0, 0);
-        document.querySelector("#temp").appendChild(canvas);
-        return ctx.getImageData(0, 0, width, height);
-      } else if (imageBitmapOrBlob instanceof Blob) {
-        const height = 480,
-          width = 640;
-        let imageFrame = document.createElement("img");
-        imageFrame.src = URL.createObjectURL(imageBitmapOrBlob);
-        // document.querySelector("#temp").appendChild(imageFrame);
-        let canvas = document.createElement("canvas");
-        imageFrame.onload = () => {
-          canvas.height = height;
-          canvas.width = width;
-          let ctx = canvas.getContext("2d");
-          ctx.drawImage(imageFrame, 0, 0);
-
-          document.querySelector("#temp").appendChild(canvas);
-          const decodedData = jsQR(
-            ctx.getImageData(0, 0, width, height).data,
-            width,
-            height
-          );
-          console.log(`${decodedData.data}`);
-          // return ctx.getImageData(0, 0, width, height);
-        };
+    scanBlob(photoBlob) {
+      if (photoBlob instanceof Blob) {
+        return new Promise((resolve, reject) => {
+          const height = 480,
+            width = 640;
+          let imageFrame = document.createElement("img");
+          imageFrame.src = URL.createObjectURL(photoBlob);
+          // document.querySelector("#temp").appendChild(imageFrame);
+          let canvas = document.createElement("canvas");
+          imageFrame.onload = () => {
+            canvas.height = height;
+            canvas.width = width;
+            let ctx = canvas.getContext("2d");
+            ctx.drawImage(imageFrame, 0, 0);
+            // document.querySelector("#temp").appendChild(canvas);
+            const decodedData = jsQR(
+              ctx.getImageData(0, 0, width, height).data,
+              width,
+              height
+            );
+            if (decodedData) {
+              resolve(decodedData);
+            } else {
+              reject("Can't Scan");
+            }
+          };
+        });
       }
       return;
     },
