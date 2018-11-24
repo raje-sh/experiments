@@ -4,10 +4,17 @@
   <el-button @click="readQrStream">Start</el-button>
   <el-button @click="stopScanning">Stop</el-button>
   <input type="file" accept="image/*;capture=camera" @change="drawImageToCanvasAndScan"/>
+  <el-switch
+  style="display: block"
+ v-model="cameraType"
+  active-color="#13ce66"
+  inactive-color="#ff4949"
+  active-text="Rear"
+  inactive-text="Front">
+</el-switch>
 </el-row>
 <el-row>
-    <video v-if="canStream" ref="streamPlayer" height="400" width="400"></video>
-<canvas ref="currentframe" width="300" height="300"></canvas>
+    <video v-show="canStream" ref="streamPlayer" height="scanConfig.contentViewer.height" width="scanConfig.contentViewer.width"></video>
     <canvas ref="qrCanvas" id="myCanvas" width="200" height="100"></canvas>
 </el-row>
 <div id="temp">
@@ -33,35 +40,41 @@ export default {
       tracks: 0,
       imageFrame: undefined,
       stream: undefined,
-      canStream: true,
+      canStream: false,
       scanIntervalId: undefined,
       decodedData: undefined,
       getFrameInterval: 500,
       scanTimeout: 6000,
       scanConfig: {
-        camera: {
-          height: 350,
-          width: 640
+        contentViewer: {
+          height: 400,
+          width: 400
         }
-      }
+      },
+      cameraType: true
     };
   },
   watch: {
     canStream: function(oldVal, newVal) {
       if (!newVal) {
+        this.scanConfig.contentViewer.width = 0;
+        this.scanConfig.contentViewer.height = 0;
         this.imageFrame.track.stop();
+        this.stream.getTracks().forEach(t => t.stop());
+        this.$refs.streamPlayer.pause();
+        this.$refs.streamPlayer.src = undefined;
       }
     }
   },
   methods: {
-    update(stream) {
-      this.$refs.streamPlayer.src = stream;
-    },
     readQrStream() {
+      this.canStream = true;
       navigator.mediaDevices
         .getUserMedia({
           audio: false,
-          video: { facingMode: { exact: "environment" } }
+          video: {
+            facingMode: this.cameraType ? { exact: "environment" } : "user"
+          }
         })
         .then(stream => {
           this.stream = stream;
@@ -91,19 +104,13 @@ export default {
     getFrame() {
       this.imageFrame
         .takePhoto({ imageHeight: 480, imageWidth: 640 })
-        .then(photoBlob => {
-          // Promise.race()
-          this.scanBlob(photoBlob)
-            .then(({ data, chunks, location, binaryData }) => {
-              if (this.decodedData == undefined) {
-                this.canStream = false;
-                this.decodedData = data;
-                console.log(`${data}`);
-              }
-            })
-            .catch(err => {
-              console.error(err);
-            });
+        .then(this.scanBlob)
+        .then(({ data, chunks, location, binaryData }) => {
+          if (this.decodedData == undefined) {
+            this.canStream = false;
+            this.decodedData = data;
+            console.log(`${data}`);
+          }
         })
         .catch(error => console.log(error));
     },
