@@ -3,14 +3,19 @@
 <el-row>
   <el-button @click="readQrStream">Start</el-button>
   <el-button @click="stopScanning">Stop</el-button>
+  <input type="file" accept="image/*;capture=camera" @change="drawImageToCanvasAndScan"/>
 </el-row>
 <el-row>
     <video v-if="canStream" ref="streamPlayer" height="400" width="400"></video>
 <canvas ref="currentframe" width="300" height="300"></canvas>
     <canvas ref="qrCanvas" id="myCanvas" width="200" height="100"></canvas>
 </el-row>
+<div id="temp">
+</div>
+<div class="decode-box"><span id="data">
+  {{decodedData}}
+  </span></div>
 
-<input type="file" accept="image/*;capture=camera" @change="drawImageToCanvasAndScan">
       </div>
 </template>
 
@@ -31,7 +36,9 @@ export default {
       canStream: true,
       scanIntervalId: undefined,
       decodedData: "",
-      scanTimeout: 60000
+      getFrameInterval: 500,
+      scanTimeout: 6000
+      // scanTimeout: 60000
     };
   },
   watch: {
@@ -58,7 +65,7 @@ export default {
           };
           this.scanIntervalId = setInterval(() => {
             this.getFrame();
-          }, 500);
+          }, this.getFrameInterval);
           const tempComp = this;
           setTimeout(() => {
             clearInterval(this.scanIntervalId);
@@ -73,10 +80,17 @@ export default {
     },
     getFrame() {
       this.imageFrame
-        .grabFrame()
-        .then(imageBitmap => {
-          const { data, height, width } = this.transferToImageData(imageBitmap);
+        // .grabFrame()
+        .takePhoto({ imageHeight: 480, imageWidth: 640 })
+        .then(imageBitmapOrBlob => {
+          const { data, height, width } = this.transferToImageData(
+            imageBitmapOrBlob
+          );
           let decoded = jsQR(data, height, width);
+          console.log(
+            `${data.length}, ${height}, ${width}, ${height *
+              width} =========> ${decoded}`
+          );
           if (decoded) {
             const { data, chunks, location, binaryData } = decoded;
             this.canStream = false;
@@ -85,22 +99,66 @@ export default {
         })
         .catch(error => console.log(error));
     },
-    transferToImageData(imageBitmap) {
-      if (imageBitmap instanceof ImageBitmap) {
-        let { width, height } = imageBitmap;
+    async transferToImageData(imageBitmapOrBlob) {
+      if (imageBitmapOrBlob instanceof ImageBitmap) {
+        let { width, height } = imageBitmapOrBlob;
         let canvas = document.createElement("canvas");
         canvas.height = height;
         canvas.width = width;
         let ctx = canvas.getContext("2d");
-        ctx.drawImage(imageBitmap, 0, 0);
+        ctx.drawImage(imageBitmapOrBlob, 0, 0);
+        document.querySelector("#temp").appendChild(canvas);
         return ctx.getImageData(0, 0, width, height);
+      } else if (imageBitmapOrBlob instanceof Blob) {
+        const height = 480,
+          width = 640;
+        let imageFrame = document.createElement("img");
+        imageFrame.src = URL.createObjectURL(imageBitmapOrBlob);
+        // document.querySelector("#temp").appendChild(imageFrame);
+        let canvas = document.createElement("canvas");
+        imageFrame.onload = () => {
+          canvas.height = height;
+          canvas.width = width;
+          let ctx = canvas.getContext("2d");
+          ctx.drawImage(imageFrame, 0, 0);
+
+          document.querySelector("#temp").appendChild(canvas);
+          const decodedData = jsQR(
+            ctx.getImageData(0, 0, width, height).data,
+            width,
+            height
+          );
+          console.log(`${decodedData.data}`);
+          // return ctx.getImageData(0, 0, width, height);
+        };
       }
       return;
     },
     stopScanning() {
       this.canStream = false;
     },
-    drawImageToCanvasAndScan(event) {}
+    drawImageToCanvasAndScan(event) {
+      const qrImage = document.createElement("img");
+      qrImage.src = URL.createObjectURL(event.target.files[0]);
+      const canvas = document.createElement("canvas");
+      qrImage.onload = () => {
+        canvas.height = qrImage.naturalHeight;
+        canvas.width = qrImage.naturalWidth;
+        let ctx = canvas.getContext("2d");
+        ctx.drawImage(qrImage, 0, 0);
+        let { data, height, width } = ctx.getImageData(
+          0,
+          0,
+          qrImage.naturalWidth,
+          qrImage.naturalHeight
+        );
+        console.log(`${data.length}, ${height}, ${width}, ${height * width}`);
+        const decodedData = jsQR(data, width, height);
+        this.decodedData = decodedData.data;
+        // document.querySelector("#temp").appendChild(canvas);
+      };
+      // document.querySelector("#temp").appendChild(qrImage);
+    }
   },
   mounted: function() {
     this.$nextTick(function() {
@@ -118,6 +176,10 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+.decode-box #data {
+  color: rgb(37, 162, 219);
+  font-size: 40px;
+}
 #myCanvas {
   /* background: #42b983; */
 }
