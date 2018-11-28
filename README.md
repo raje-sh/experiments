@@ -1,5 +1,7 @@
 # qr-scanner
 
+VueJs Application to scan QR Code from browser.
+
 ## Project setup
 ```
 npm install
