@@ -1,23 +1,23 @@
 <template>
   <div id="app">
-<QRScanner></QRScanner>
+  <QRScanner/>
   </div>
 </template>
 
 <script>
-import QRScanner from './components/QRScanner.vue'
+import QRScanner from "./components/QRScanner.vue";
 
 export default {
-  name: 'app',
+  name: "app",
   components: {
-    QRScanner
-  }
-}
+    QRScanner,
+  },
+};
 </script>
 
 <style>
 #app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  font-family: "Avenir", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;

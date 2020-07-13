@@ -1,9 +1,9 @@
 <template>
-  <div>
+<div>
 <el-row>
-  <el-button @click="readQrStream">Start</el-button>
-  <el-button @click="stopScanning">Stop</el-button>
-  <input type="file" accept="image/*;capture=camera" @change="drawImageToCanvasAndScan"/>
+  <el-button v-on:click="readQrStream">Start</el-button>
+  <el-button v-on:click="stopScanning">Stop</el-button>
+  <input type="file" accept="image/*;capture=camera" v-on:change="drawImageToCanvasAndScan"/>
   <el-switch
   style="display: block"
  v-model="cameraType"
@@ -17,13 +17,15 @@
     <video v-show="canStream" ref="streamPlayer" height="scanConfig.contentViewer.height" width="scanConfig.contentViewer.width"></video>
     <canvas ref="qrCanvas" id="myCanvas" width="200" height="100"></canvas>
 </el-row>
-<div id="temp">
-</div>
-<div class="decode-box"><span id="data">
+<div class="decode-box">
+  <span id="data">
   {{decodedData}}
-  </span></div>
+  </span>
+  </div>
+  
 
-      </div>
+  </div>
+
 </template>
 
 <script>
@@ -33,7 +35,7 @@ import jsQR from "jsqr";
 export default {
   name: "QRScanner",
   props: {
-    msg: String
+    msg: String,
   },
   data() {
     return {
@@ -48,10 +50,10 @@ export default {
       scanConfig: {
         contentViewer: {
           height: 400,
-          width: 400
-        }
+          width: 400,
+        },
       },
-      cameraType: true
+      cameraType: true,
     };
   },
   watch: {
@@ -60,11 +62,11 @@ export default {
         this.scanConfig.contentViewer.width = 0;
         this.scanConfig.contentViewer.height = 0;
         this.imageFrame.track.stop();
-        this.stream.getTracks().forEach(t => t.stop());
+        this.stream.getTracks().forEach((t) => t.stop());
         this.$refs.streamPlayer.pause();
         this.$refs.streamPlayer.src = undefined;
       }
-    }
+    },
   },
   methods: {
     readQrStream() {
@@ -73,10 +75,10 @@ export default {
         .getUserMedia({
           audio: false,
           video: {
-            facingMode: this.cameraType ? { exact: "environment" } : "user"
-          }
+            facingMode: this.cameraType ? { exact: "environment" } : "user",
+          },
         })
-        .then(stream => {
+        .then((stream) => {
           this.stream = stream;
           let video = this.$refs.streamPlayer;
           video.srcObject = stream;
@@ -94,7 +96,7 @@ export default {
             if (this.decodedData == undefined) {
               this.$notify({
                 title: "Scan Timeout Exceeded",
-                message: "Please Try Again"
+                message: "Please Try Again",
               });
             }
           }, this.scanTimeout);
@@ -112,7 +114,7 @@ export default {
             console.log(`${data}`);
           }
         })
-        .catch(error => console.log(error));
+        .catch((error) => console.log(error));
     },
     scanBlob(photoBlob) {
       if (photoBlob instanceof Blob) {
@@ -168,7 +170,7 @@ export default {
         // document.querySelector("#temp").appendChild(canvas);
       };
       // document.querySelector("#temp").appendChild(qrImage);
-    }
+    },
   },
   mounted: function() {
     this.$nextTick(function() {
@@ -180,7 +182,7 @@ export default {
         .getImageData(0, 0, 116, 116);
       // console.log(jsQR(data, width, height));
     });
-  }
+  },
 };
 </script>
 
@@ -189,9 +191,6 @@ export default {
 .decode-box #data {
   color: rgb(37, 162, 219);
   font-size: 40px;
-}
-#myCanvas {
-  /* background: #42b983; */
 }
 h3 {
   margin: 40px 0 0;
