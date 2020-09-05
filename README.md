@@ -1,2 +1,3 @@
 # node-https-express
-configure https for express server
+
+This is a sample application serve API over SSL/TLS connection using express.js
