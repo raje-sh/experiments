@@ -8,6 +8,7 @@ RUN apk add --no-cache --update gcc libc-dev libffi-dev openssl-dev git && \
 COPY . ./udemy-dl 
 
 VOLUME ["/course"]
+WORKDIR /udemy-dl
 
-#ENTRYPOINT ["python", "/udemy-dl/udemy-dl.py", "-o", "/course", "-k", "cookies.txt"]
-CMD /bin/bash
+ENTRYPOINT ["python", "./udemy-dl.py", "-o", "../course", "-k", "./cookies.txt"]
+# CMD sh

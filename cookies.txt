@@ -1,1 +1,1 @@
-session_token=FlawEhcwtix2lPxdmTsszC8RgUtGxLHrChRhtxil
+access_token=FlawEhcwtix2lPxdmTsszC8RgUtGxLHrChRhtxil
