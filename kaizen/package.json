@@ -1,0 +1,16 @@
+{
+  "name": "ja-slack-app",
+  "version": "1.0.0",
+  "description": "Slack Application for learning japanese effectively",
+  "main": "app.js",
+  "scripts": {
+    "start:dev": "nodemon --watch core --watch app.js app.js"
+  },
+  "author": "Rajesh Sundaram",
+  "license": "ISC",
+  "dependencies": {
+    "@slack/bolt": "^3.3.0",
+    "dotenv": "^8.2.0",
+    "envalid": "^7.1.0"
+  }
+}
