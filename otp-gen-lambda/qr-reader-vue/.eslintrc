@@ -1,0 +1,15 @@
+{
+  "extends": ["plugin:vue/vue3-recommended"],
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": false
+    }
+  },
+  "rules": {
+    "semi": 2,
+    "no-console": "off",
+    "no-unused-vars": "off"
+  }
+}
