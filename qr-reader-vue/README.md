@@ -1,0 +1,39 @@
+# qr-scanner
+
+VueJs Application to scan QR Code from browser.
+
+![QR Scan](WIN_20181128_23_01_19_Pro.gif)
+
+## Project setup
+
+```
+npm install
+```
+
+### Compiles and hot-reloads for development
+
+```
+npm run serve
+```
+
+### Compiles and minifies for production
+
+```
+npm run build
+```
+
+### Run your tests
+
+```
+npm run test
+```
+
+### Lints and fixes files
+
+```
+npm run lint
+```
+
+### Customize configuration
+
+See [Configuration Reference](https://cli.vuejs.org/config/).
