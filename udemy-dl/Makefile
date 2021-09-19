@@ -1,4 +1,4 @@
-COURSE_URL	:= https://rakuten-tech.udemy.com/course/socketio-with-websockets-the-details
+COURSE_URL	:= 
 CWD := $(PWD)
 build:
 	docker build -t udemy-dl-custom:latest .
